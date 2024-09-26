@@ -1,0 +1,496 @@
+---
+title: "Presidential Fitness Test:<img src=\"https://nlepera.github.io/sta551/HW01/img/penguin_cute.png\" style=\"float: right; width: 12%\"/>"
+subtitle: "The Impact of Local Education, Poverty, and Unemployment Rates on County Presidental Election Results"
+author: 
+- name: Natalie LePera
+  affiliation: West Chester University | STA511 - HW 01
+date: "25 Sep 2024"
+output:
+  html_document: 
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+    toc_collapse: yes
+    number_sections: yes
+    code_folding: hide
+    code_download: yes
+    smooth_scroll: true
+    theme: readable
+---
+
+```{css echo = FALSE}
+h1.title {  /* Title - font specifications of the report title */
+  font-weight:bold;
+  color: darkmagenta ;
+}
+h1.subtitle {  /* Title - font specifications of the report title */
+  font-weight:bold;
+  color: darkmagenta ;
+}
+h4.author { /* Header 4 - font specifications for authors  */
+  font-family: system-ui;
+  color: navy;
+}
+h4.date { /* Header 4 - font specifications for the date  */
+  font-family: system-ui;
+  color: navy;
+}
+h1 { /* Header 1 - font specifications for level 1 section title  */
+    font-weight:bold;
+    color: navy;
+    text-align: left;
+}
+h2 { /* Header 2 - font specifications for level 2 section title */
+    font-weight:bold;
+    color: navy;
+    text-align: left;
+}
+
+h3 { /* Header 3 - font specifications of level 3 section title  */
+    font-weight:bold;
+    color: navy;
+    text-align: left;
+}
+
+h4 { /* Header 4 - font specifications of level 4 section title  */
+    color: darkred;
+    text-align: left;
+}
+
+body { background-color:white; }
+
+.highlightme { background-color:yellow; }
+
+p { background-color:white; }
+h5 {
+  color: white;
+}
+
+```
+
+```{r setup, include=FALSE}
+if (!require("dplyr")) {
+    install.packages("dplyr")              
+    library("dplyr")
+}
+
+if (!require("stringr")) {
+    install.packages("stringr")              
+    library("stringr")
+}
+
+if (!require("plotly")) {
+    install.packages("plotly")              
+    library("plotly")
+}
+
+if (!require("leaflet")) {
+    install.packages("leaflet")              
+    library("leaflet")
+}
+
+if (!require("crosstalk")) {
+    install.packages("crosstalk")              
+    library("crosstalk")
+}
+
+
+if (!require("rjson")) {
+    install.packages("rjson")              
+    library("rjson")
+}
+if (!require("tigris")) {
+    install.packages("tigris")              
+    library("tigris")
+}
+if (!require("raster")) {
+    install.packages("raster")              
+    library("raster")
+}
+if (!require("leafpop")) {
+    install.packages("leafpop")              
+    library("leafpop")
+}
+if (!require("ggridges")) {
+    install.packages("ggridges")              
+    library("ggridges")
+}
+if (!require("cowplot")) {
+    install.packages("cowplot")              
+    library("cowplot")
+}
+
+knitr::opts_chunk$set(echo = TRUE,       
+                      warning = FALSE,   
+                      result = TRUE,   
+                      message = FALSE,
+                      comment = NA)
+
+options(DT.options = list(pageLength = 5, scrollX = TRUE))
+```
+<br>
+
+# Introduction
+
+With the upcoming 2024 United States presidential election approaching, analysts are consistently searching for metrics to predict the outcomes accurately and early.  While individual voter motivations are varied and nuanced, a review of the common economic measures in relation to county election results of the past can potentially provide insight into the trends of the future.   In order to review these potential trends, the following data was utilized for analysis:
+
+- Presidential Election Data, obtained from the publicly available <a href="https://electionlab.mit.edu/data">MIT Election Lab Data Sets</a>
+- Per County Unemployment Data, obtained from the publicly available <a href="https://www.ers.usda.gov/data-products/county-level-data-sets/">USDA Economic Research Service County-level datasets</a>
+- Per County Poverty Data, obtained from the publicly available <a href="https://www.ers.usda.gov/data-products/county-level-data-sets/">USDA Economic Research Service County-level datasets</a>
+- Per County Education Data, obtained from the publicly available <a href="https://www.ers.usda.gov/data-products/county-level-data-sets/">USDA Economic Research Service County-level datasets</a>
+
+
+While these datasets include a litany of information, the areas of focus in this exploratory data analysis are the impacts of county level unemployment rate for the current election year, county level poverty rate for the year prior to the current election year, higher education rate for the four years prior to the current election year.  To note, years prior to the current election year are utilized due to data availability and the impact of previous year's socioeconomic conditions on the current voter's opinions.  The focus of this exploratory data analysis centers around analyzing potential correlations and predictive values as related to the 2020 presidential election only. 
+
+<h4>Relevant Note</h4>
+All data preparation code is copied in the appendix as well as included in line with the report, visualization code is only included in line with the report. To view any of the code in line with each location it is used in the report, select the `Show` buttons on the right hand side of the page.
+
+# Data Preparation
+
+Prior to any data visualization and analysis, all datasets were loaded into RStudio (v2024.09.0 Build 375) to prepare unique relaional datasets.  A unique identifier of `FIPS Code` was utilized across all four (4) datasets, as well as to link the relevant geoJSON data for county mapping. 
+
+## Create Relational Datasets
+
+### Presidential Election Data (2020 or most recent year available)
+
+The raw presidential election data was obtained from from the publicly available <a href="https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/VOQCHQ">MIT Election Lab Data Set: County Presidential Election Returns 2000-2020</a>. 
+
+Election data was read into RStudio as `election_raw` and cleaned utilizing the following steps to create the relational dataset `election`:
+
+- Data was grouped by the county `FIPS code`
+- Data was sorted by descending `Year`
+- Data was filtered by political `Party` for only `Democrat` and `Republican` as the analysis focuses on the potential impacts on county presidential election winners.  No other parties have ever won the presidency and thus were omitted.  
+  - To note: blank values were not omitted
+- Unnecessary variables were removed
+- Data was filtered for `2020` or the `most recent year with available data` if 2020 was not available
+
+A searchable preview of the relational dataset `election` is available in the data table below.  
+
+```{r}
+##read in the election data as election_raw
+
+election_raw <- read.csv('https://raw.githubusercontent.com/nlepera/sta551/refs/heads/main/HW01/data/countypresidential_election_2000-2020.csv')
+
+##clean the election data 
+
+election <- election_raw %>% 
+  group_by(county_fips) %>%   ##group by county FIPS code
+  arrange (desc(year)) %>%    ##sort by descending year
+  filter (party == "DEMOCRAT" | party == "REPUBLICAN") %>%    ##filter for only dem & rep
+  subset(, -c(state_po, office, version, mode)) %>%   ##remove unnecessary columns
+  slice (1:2) %>%   ##pull top 2 values for each group (county_fips sorted by desc year) pulling both dem & rep for each county at max year available
+  arrange (desc(candidatevotes)) %>%    ##re filter to sort by group, with highest candidate votes on top
+  slice (1) %>%    ##only keep value for highest candidate votes (winner) per county
+  rename (FIPS = county_fips)   ## set ID name for outer join
+  
+DT::datatable(election)
+```
+
+### Unemployment Data (2020 or most recent year available)
+The raw unemployment data was obtained from from the publicly available <a href="https://www.ers.usda.gov/data-products/county-level-data-sets/">USDA Economic Research Service County-level Dataset: Unemployment</a>. 
+
+Unemployment data was read into RStudio as `unemploy_raw` and cleaned utilizing the following steps to create the relational dataset `unemploy`:
+
+- Data was filtered for text containing the string `Unemployment` in the `Attribute` variable data values to remove other unnecessary data types.
+- In order to extract the year from the `Attribute` values, a new column was created by extracting the last four (4) characters of the `Attribute` values.
+- Data was grouped by the county `FIPS code`
+- Data was sorted by descending `Year`
+- Data was filtered for `2020` or the `most recent year with available data` if 2020 was not available
+- Unnecessary variables were removed
+
+A searchable preview of the relational dataset `unemploy` is available in the data table below.  
+
+```{r}
+## read in the unemployment data as unemploy_raw
+
+unemploy_raw <- read.csv('https://raw.githubusercontent.com/nlepera/sta551/refs/heads/main/HW01/data/Unemployment.csv')
+
+## clean the unemployment data
+unemploy <- unemploy_raw %>% 
+  filter (grepl('Unemployment', Attribute)) %>%   #use dplyr package to use filter(grepl()) to filter for string of text to select only the unemployment rate values
+  mutate (year = str_sub(Attribute, -4)) %>%  ##create a new column using mutate and stringr to create a new column from the last 4 values of the attribute column, to extract the year (str_sub -> stringr_subset)
+  group_by (FIPS_Code) %>%  ##group by FIPS code before sorting to get max year
+  arrange (desc(year)) %>%  ## sort descending year to put max available at the top
+  slice(1) %>%   ##slice top value to keep only max year for each FIPS code
+  subset (, c(FIPS_Code, Value)) %>%   ##remove unnecessary columns
+  rename ("Unemployment_Rate (%)" = Value, FIPS = FIPS_Code)    ##rename column to reflect unemployment rate & set ID name for outer join
+
+DT::datatable(unemploy)
+  
+```
+
+### Poverty Data (2019)
+The raw poverty data was obtained from from the publicly available <a href="https://www.ers.usda.gov/data-products/county-level-data-sets/">USDA Economic Research Service County-level Dataset: Poverty</a>. 
+
+Poverty data was read into RStudio as `poverty_raw` and cleaned utilizing the following steps to create the relational dataset `poverty`:
+
+- Data was filtered for text containing the string `PCTPOVALL_2019` in the `Attribute` variable data values to remove other unnecessary data types.
+- Unnecessary variables were removed
+
+A searchable preview of the relational dataset `unemploy` is available in the data table below.
+
+```{r}
+## read in the poverty data as poverty_raw
+
+poverty_raw <- read.csv('https://raw.githubusercontent.com/nlepera/sta551/refs/heads/main/HW01/data/PovertyEstimates.csv')
+
+##clean the poverty data
+poverty <- poverty_raw %>% 
+  filter (Attribute == "PCTPOVALL_2019") %>%  ##Filter for 2019 poverty values
+  subset (, c(FIPStxt, Value)) %>%  ##remove unneccessary columns
+  rename ("Poverty_Rate (%)" = Value, FIPS = FIPStxt)   ##rename Value column to Poverty_Rate (%) and set ID name for outer join
+
+DT::datatable(poverty)
+```
+
+### Education Data (2015 - 2019)
+The raw education data was obtained from from the publicly available <a href="https://www.ers.usda.gov/data-products/county-level-data-sets/">USDA Economic Research Service County-level Dataset: Education</a>. 
+
+Unemployment data was read into RStudio as `edu_raw` and cleaned utilizing the following steps to create the relational dataset `edu`:
+
+- Unnecessary variables were removed
+- Columns were renamed to truncated values for ease of use:
+  - `No_HS` = # of persons in the county with less than a high school diploma
+  - `HS` = # of persons in the county with a high school diploma only
+  - `AS_SomeCol` = # of persons in the county with either some college credit or an Associate's Degree
+  - `BS_More` = # of persons in the county with a Bachelor's Degree or higher
+- Data cleaned to remove commas from numbers and convert from character to numeric values
+
+
+A searchable preview of the relational dataset `unemploy` is available in the data table below.
+
+
+```{r}
+## read in the unemployment data as edu_raw
+
+edu_raw <- read.csv('https://nlepera.github.io/sta551/HW01/data/Education.csv', stringsAsFactors = FALSE)
+
+
+#clean education data
+edu <- edu_raw %>% 
+  subset (, c(FIPS.Code, Less.than.a.high.school.diploma..2015.19, High.school.diploma.only..2015.19, Some.college.or.associate.s.degree..2015.19,	Bachelor.s.degree.or.higher..2015.19)) %>%  ##remove irrelevant columns
+  rename ( "No_HS" = Less.than.a.high.school.diploma..2015.19, "HS" = High.school.diploma.only..2015.19, "AS_SomeCol" = Some.college.or.associate.s.degree..2015.19,	"BS_More" = Bachelor.s.degree.or.higher..2015.19, FIPS = FIPS.Code)  ##rename for ease and set ID name for outer join
+edu$No_HS = gsub(',', '', edu$No_HS) ##remove commas from number with commas saved as charachters
+edu$HS = gsub(',', '', edu$HS)
+edu$AS_SomeCol = gsub(',', '', edu$AS_SomeCol)
+edu$BS_More = gsub(',', '', edu$BS_More)
+edu$No_HS = as.numeric(edu$No_HS)  ##transform to numeric to aggregate
+edu$HS = as.numeric(edu$HS)
+edu$AS_SomeCol = as.numeric(edu$AS_SomeCol)
+edu$BS_More = as.numeric(edu$BS_More)
+  
+DT::datatable(edu)
+```
+## Merge Relational Datasets & Aggregate data
+
+### Merge the relational datasets using county FIPS codes
+
+Once all four (4) relational datasets (`edu`, `election`, `poverty`, and `unemploy`) were created, a new dataset named `all.data` was created by completing multiple full join functions.  All datasets were merged using the county `FIPS` code as the unique identifier conserved across all datasets. 
+
+```{r}
+##merge election data & education data as election.education 
+election.education <- full_join (
+  x = election,
+  y = edu,
+  by = "FIPS",
+  keep = FALSE
+)
+
+
+##merge election.education & poverty data as election.education.poverty
+election.education.poverty <- full_join(
+  x = election.education,
+  y = poverty,
+  by = "FIPS",
+  keep = FALSE
+)
+
+##merge election.education.poverty & unemployment data as all.data
+all.data <- full_join (
+  x = election.education.poverty,
+  y = unemploy,
+  by = "FIPS",
+  keep = FALSE
+)
+
+
+```
+
+### Aggregate the Education Data into % Higher Ed
+
+As the educational data provided for each county consisted of the total number of persons in each county that received each of the four tiers of education, the data was aggregated to allow for cleaner analysis and comparison.  In order to aggregate the educational data, the four education variables (`No_HS`, `HS`, `AS_SomeCol`, & `BS_More`) were aggregated to create a new variable `Higher_Ed_Percent` to measure the percentage of the population surveyed that completed either some college credit, an Associate's Degree, a Bachelor's Degree, or additional graduate level degrees.  
+
+This higher education metric was created as a measure of the average socioeconomic status of the counties being analyzed.
+
+```{r}
+all.data <- all.data  %>% 
+  filter(FIPS != 0) %>% ##filter out values with no associated county or state name
+  filter(FIPS != 1000) %>% 
+  mutate (Higher_Ed_Percent = (((`AS_SomeCol` + `BS_More`)/(`No_HS`+ `HS` + `AS_SomeCol` + `BS_More`))*100))  ##% of pop with higher ed.
+
+```
+
+# Visualizing and Analyzing the Data
+
+## Mapping the full data
+
+For an initial visualization of the data as a whole, the `all.data` dataset was mapped by county utilizing an interactive leaflet map.  Due to the size of the dataset and number of counties, color specific data is not visible until the map is zoomed in to the appropriate county level.  Until zoomed in the color scale (green to red) represents the number of counties nested in that group until the map is zoomed in further.  Once fully zoomed in the color of the <b>unnumbered circles</b> (red and blue) represent the winning party (Republican and Democrat respectively) in each county for the 2020 presidential election.
+
+```{r}
+
+county_data_raw <- sf::read_sf("https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json") ##pull in map of FIPS codes 
+
+FIPSconvert_raw <- sf::read_sf("https://nlepera.github.io/sta551/HW01/data/fips2geocode.csv") ##pull in key of FIPS codes to lat/long
+
+county_data <- county_data_raw %>%  #clean county data to list FIPS as numeric & match name to key for join
+  mutate (id = as.numeric(as.character(id))) %>% 
+  rename (FIPS = id)
+
+FIPSconvert <- FIPSconvert_raw %>%  
+  mutate (fips = as.numeric(as.character(fips)), lon = as.numeric(as.character(lon)), lat = as.numeric(as.character(lat))) %>% 
+  rename (FIPS = fips, Longitude = lon, Latitude = lat)
+
+all.data.join <- full_join(
+  x = all.data,
+  y = FIPSconvert,
+  by = "FIPS",
+  keep = FALSE
+) %>% 
+  ungroup()
+```
+
+<h2> Interactive Map of County Data </h2>
+
+```{r}
+pal <- colorFactor(c("blue", "red"), domain = c("REPUBLICAN", "DEMOCRAT"))
+
+title <- "
+<style>
+  .custom-title {
+    color: white;
+    padding: 0px;
+    border-radius: 0px;
+    text-align: right;
+  }
+</style>
+Election Results, Education Rates, Unemployment Rates & Poverty Rates
+<br>Zoom in to view each county individually
+<br>Select a county's circle to view full data"
+
+leaflet() %>% 
+  setView(lng=-98.5795, lat=39.8283, zoom = 4) %>% ##set view to mid US
+  addProviderTiles(providers$CartoDB.DarkMatter) %>%  ##set map to dark mode
+  addControl(html = title, 
+             position = "topright", 
+             className = "custom-title") %>% 
+  addPolygons(data = county_data,  ##add FIPS polygons
+              color = "yellow",
+              fill = FALSE,
+              weight = 0.25) %>% 
+  addCircleMarkers(data = all.data.join,
+                   color = ~pal(party),
+                   radius = 20,
+                   fillOpacity = 0.5,
+                   popup = ~popupTable(all.data),
+                   clusterOptions = markerClusterOptions(maxClusterRadius = 50))
+  
+  
+```
+
+## Plot variable distribution
+
+Before completing any data analysis the distribution of the three numeric variables of interest was reviewed, controlling for the the winning party (Republican or Democrat) in each county for the 2020 presidential election.
+
+Both unemployment and higher education rates appear to have normal distributions while poverty rates appear to have closer to a gamma distribution.  A greater frequency of counties with democratic candidate winners was seen for all three (3) variables in question. 
+```{r}
+
+ggplot (all.data, aes(x = `Unemployment_Rate (%)`, fill = `party`)) +
+  geom_histogram(inherit.aes = TRUE, color = "black") +
+  ggtitle ("Distribution of Unemployment Rates by County Election Winner") +
+  xlab ("County Unemployment Rate (x)
+        [% of County Pop.]") + 
+  ylab ("Counties W/ Unemployment Rate = x")  +
+  scale_fill_manual(values = c("blue", "red")) +
+  theme(legend.position = c(0.8, 0.8))
+
+ggplot (all.data, aes(x = `Poverty_Rate (%)`, fill = `party`)) +
+  geom_histogram(inherit.aes = TRUE, color = "black") + 
+  ggtitle ("Distribution of Poverty Rates by County Election Winner") + 
+  xlab ("County Poverty Rate (x)
+        [% of County Pop.]") +
+  ylab ("Counties W/ Poverty Rate = x")  +
+  scale_fill_manual(values = c("blue", "red")) +
+  theme(legend.position = c(0.8, 0.8), height = "200px")
+
+ggplot (all.data, aes(x = `Higher_Ed_Percent`, fill = `party`)) + 
+  geom_histogram(inherit.aes = TRUE, color = "black") + 
+  ggtitle ("Distribution of Higher Education Rates by County Election Winner") + 
+  xlab ("County Higher Ed. Rate (x)
+        [% of County Pop.] ") + 
+  ylab ("Counties W/ Higher Ed. Rate = x")  +
+  scale_fill_manual(values = c("blue", "red")) +
+  theme(legend.position = c(0.8, 0.8))
+
+```
+
+## Plot Relationship Between Numeric Variables
+
+To determine the potential relationships between the three numeric variables of interest (`Unemployment Rate`, `Poverty Rate`, and `Higher Education Rate`) were plotted against each other and reviewed utilizing a basic linear regression model for the normally distributed data and a GLM gamma regresion model for the gamma distributed data.
+```{r}
+ggplot(data = all.data, aes(x =all.data$`Unemployment_Rate (%)`, y=all.data$`Poverty_Rate (%)`, color=`party`)) +
+  geom_point(alpha = 0.25) +
+    ggtitle ("Unemployment Rates vs. Poverty Rates by Election Winning Party") + 
+    xlab ("County Unemployment Rate [% of County Pop.] (x)") + 
+    ylab ("County Poverty Rate [% of County Pop.] (y)")  +
+  scale_color_manual(values = c("blue", "red")) +
+  stat_smooth(method = lm, se=FALSE, size = 0.1) 
+
+```
+
+```{r}
+pov_unem <- lm(`Poverty_Rate (%)`~`Unemployment_Rate (%)` , data = all.data)
+summary(pov_unem)
+
+```
+
+```{r}
+ggplot(data = all.data, aes(x =all.data$`Higher_Ed_Percent`, y=all.data$`Poverty_Rate (%)`, color=`party`)) +
+  geom_point(alpha = 0.25) +
+    ggtitle ("Percent of Population w/ Higher Education vs.
+             Poverty Rates by Election Winning Party") + 
+    xlab ("County Higher Ed. Rate [% of County Pop.] (x)") + 
+    ylab ("County Poverty Rate [% of County Pop.] (y)")  +
+  scale_color_manual(values = c("blue", "red")) +
+  stat_smooth(method = glm, se=FALSE, size = 0.1) 
+
+```
+
+```{r}
+highed_pov <- glm(`Higher_Ed_Percent`~`Poverty_Rate (%)`, data = all.data)
+summary(highed_pov)
+
+```
+
+```{r}
+ggplot(data = all.data, aes(x =all.data$`Higher_Ed_Percent`, y=all.data$`Unemployment_Rate (%)`, color=`party`)) +
+  geom_point(alpha = 0.25) +
+    ggtitle ("Percent of Population w/ Higher Education vs.
+             Unemployment Rates by Election Winning Party") + 
+    xlab ("County Higher Ed. Rate [% of County Pop.] (x)") + 
+    ylab ("County Unemployment Rate [% of County Pop.] (y)")  +
+  scale_color_manual(values = c("blue", "red")) +
+  stat_smooth(method = lm, se=FALSE, size = 0.1) 
+
+```
+
+```{r}
+highed_unem <- lm(`Higher_Ed_Percent`~`Unemployment_Rate (%)`, data = all.data)
+summary(highed_unem)
+
+```
+
+# Conclusions
+
+While all three investigated potential correlations indicated a high level of statistic significance with p values well below 0.05, both the `Unemployment Rates vs. Poverty Rates by Election Winning Party` and `Percent of Population w/ Higher Education vs. Unemployment Rates by Election Winning Party` models illustrated a poor fit with very low R squared values.  The `Percent of Population w/ Higher Education vs. Poverty Rates by Election Winning Party` also illustrated a poor fit but had the highest r squared value indicating reduced variance in this model. No clustering was noted along the party variables. 
+
+Overall a correlation between unemployment rates, poverty rates, higher education rates, and county winning party was not illustrated. 
