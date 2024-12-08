@@ -1,0 +1,235 @@
+---
+title: "<INSERT TITLE> :<img src=\"https://nlepera.github.io/sta551/HW01/img/penguin_cute.png\" style=\"float: right; width: 12%\"/>"
+subtitle: "<Insert sub title> Loan Default Analysis"
+author:
+- name: Natalie LePera
+  affiliation: West Chester University | STA551 - HW 04
+date: "Dec 2024"
+output:
+  html_document: 
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+    toc_collapse: yes
+    number_sections: yes
+    code_folding: hide
+    code_download: yes
+    smooth_scroll: true
+    theme: readable
+    fig_align: center
+---
+
+```{css, echo = FALSE}
+h1.title {  /* Title - font specifications of the report title */
+  font-weight:bold;
+  color: darkmagenta ;
+}
+h1.subtitle {  /* Title - font specifications of the report title */
+  font-weight:bold;
+  color: darkmagenta ;
+}
+h4.author { /* Header 4 - font specifications for authors  */
+  font-family: system-ui;
+  color: navy;
+}
+h4.date { /* Header 4 - font specifications for the date  */
+  font-family: system-ui;
+  color: navy;
+}
+h1 { /* Header 1 - font specifications for level 1 section title  */
+    font-weight:bold;
+    color: navy;
+    text-align: left;
+}
+h2 { /* Header 2 - font specifications for level 2 section title */
+    font-weight:bold;
+    color: navy;
+    text-align: left;
+}
+
+h3 { /* Header 3 - font specifications of level 3 section title  */
+    font-weight:bold;
+    color: navy;
+    text-align: left;
+}
+
+h4 { /* Header 4 - font specifications of level 4 section title  */
+    color: darkred;
+    text-align: left;
+}
+
+body {
+  background-color:white;
+}
+
+.highlightme { 
+  background-color:yellow; 
+}
+
+p { 
+  background-color:white; 
+}
+
+h5 {
+  color: navy;
+}
+
+.iframe {
+  text-align: center;
+}
+
+a:link {
+  color: darkmagenta;
+}
+
+.figlabel {
+  text-align: center;
+  color: darkslategray;
+  font-weight: bold;
+  font-size: 18;
+}
+
+.td1 {
+  font-weight: bold;
+}
+
+th, td {
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+tr:hover {background-color: coral;}
+```
+
+```{r setup, include=FALSE}
+if (!require("dplyr")) {
+    install.packages("dplyr")              
+    library("dplyr")
+}
+
+if (!require("stringr")) {
+    install.packages("stringr")              
+    library("stringr")
+}
+
+if (!require("plotly")) {
+    install.packages("plotly")              
+    library("plotly")
+}
+
+if (!require("pandoc")) {
+    install.packages("pandoc")              
+    library("pandoc")
+}
+
+if (!require("gridExtra")) {
+    install.packages("gridExtra")              
+    library("gridExtra")
+}
+
+if (!require("grid")) {
+    install.packages("grid")              
+    library("grid")
+}
+if (!require("raster")) {
+    install.packages("raster")              
+    library("raster")
+}
+if (!require("mice")) {
+    install.packages("mice")              
+    library("mice")
+}
+if (!require("pROC")) {
+    install.packages("pROC")              
+    library("pROC")
+}
+if (!require("ggridges")) {
+    install.packages("ggridges")              
+    library("ggridges")
+}
+if (!require("knitr")) {
+    install.packages("knitr")              
+    library("knitr")
+}
+if (!require("GGally")) {
+    install.packages("GGally")              
+    library("GGally")
+}
+if (!require("ggplot2")) {
+    install.packages("ggplot2")              
+    library("gglpot2")
+}
+if (!require("MASS")) {
+    install.packages("MASS")              
+    library("MASS")
+}
+if (!require("kableExtra")) {
+    install.packages("kableExtra", dependencies = TRUE)              
+    library("kableExtra")
+}
+if (!require("neuralnet")) {
+    install.packages("neuralnet", dependencies = TRUE)              
+    library("neuralnet")
+}
+if (!require("rpart")) {
+    install.packages("rpart", dependencies = TRUE)              
+    library("rpart")
+}
+if (!require("rpart.plot")) {
+    install.packages("rpart.plot", dependencies = TRUE)              
+    library("rpart.plot")
+}
+if (!require("ipred")) {
+    install.packages("ipred", dependencies = TRUE)              
+    library("ipred")
+}
+
+
+knitr::opts_chunk$set(echo = TRUE,       
+                      warning = FALSE,   
+                      result = TRUE,   
+                      message = FALSE,
+                      comment = NA,
+                      fig.align = 'center')
+
+options(DT.options = list(pageLength = 5, scrollX = TRUE))
+```
+
+
+# Introduction
+
+Intro regarding improved accuracy in default prediction models by better classifying population segments.  Better repayment probability populations identified for targeted reduced rate loan marketing, improved accuracy in predicting which customers likely to go into default before it happens. Better spending limit adjustments, targeted refinancing and payment plan options.
+
+<h5>Variables</h5>
+
+<table style="width:100%">
+<thead><tr>
+<th>Variable Name</th>
+<th>Variable Type</th>
+<th>Details</th>
+</tr></thead>
+<tr><td class = "td1">Default</td><td>Categorical</td><td>Status of bank loan default</td></tr>
+<tr><td class = "td1">Checking Amount</td><td>Numeric</td><td>Amount in borrower's checking account</td>
+<tr><td class = "td1">Term</td><td>Numeric</td><td>Loan term in months</td></tr>
+<tr><td class = "td1">Credit Score</td><td>Numeric</td><td>Borrower's credit score</td></tr>
+<tr><td class = "td1">Gender</td><td>Categorical</td><td>Borrower's gender</td></tr>
+<tr><td class = "td1">Marital Status</td><td>Categorical</td><td>Borrower's marital status</td></tr>
+<tr><td class = "td1">Car Loan</td><td>Categorical</td><td>If borrower holds a car loan</td></tr>
+<tr><td class = "td1">Personal Loan</td><td>Categorical</td><td>If borrower holds a personal loan</td></tr>
+<tr><td class = "td1">Home Loan</td><td>Categorical</td><td>If borrower holds a home loan</td></tr>
+<tr><td class = "td1">Education Loan</td><td>Categorical</td><td>If borrower holds an education loan</td></tr>
+<tr><td class = "td1">Employment Status</td><td>Categorical</td><td>Borrower's employment status</td></tr>
+<tr><td class = "td1">Amount</td><td>Numeric</td><td>Loan amount</td></tr>
+<tr><td class = "td1">Saving Amount</td><td>Numeric</td><td>Ammount in borrower's saving account</td></tr>
+<tr><td class = "td1">Age</td><td>Numeric</td><td>Duration of borrower's employment in months</td></tr>
+<tr><td class = "td1">Number of Credit Accounts</td><td>Numeric</td><td>Number of credit accounts in borrower's name</td></tr>
+</table>
+
+
+
+# References
+
+Data source:
+
+Applied Analytics through Case Studies Using SAS and R, Deepti Gupta by APress, ISBN - 978-1-4842-3525-6
+Accessed via: <a href="https://pengdsci.github.io/datasets/LoanData2/BankLoanDefaultDataset.csv">https://pengdsci.github.io/datasets/LoanData2/BankLoanDefaultDataset.csv</a>
