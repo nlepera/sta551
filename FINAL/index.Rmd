@@ -1,0 +1,682 @@
+---
+title: "Will You Pay Me Back for That?"
+subtitle: "Natalie LePera"
+author: "West Chester University<br>STA551: Foundations of Data Science"
+institute: "Final Project - 12 Dec 2024"
+output:
+  xaringan::moon_reader:
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+---
+```{css, echo = FALSE}
+.title-slide {
+	background-image: url(https://nlepera.github.io/sta553/w03_Penguin/img/penguin_cute.png);
+	background-position: bottom right;
+	background-size: 300px;
+  	background-color: #70384A;
+	padding-left: 100px;  /* delete this for 4:3 aspect ratio */
+}
+
+h1.title {  /* Title - font specifications of the report title */
+  font-weight:bold;
+  color: #3b082f;
+}
+h1.subtitle {  /* Title - font specifications of the report title */
+  font-weight:bold;
+  color: #3b082f;
+}
+h4.author { /* Header 4 - font specifications for authors  */
+  font-family: system-ui;
+  color: #3b082f;
+}
+h4.date { /* Header 4 - font specifications for the date  */
+  font-family: system-ui;
+  color: #3b082f;
+}
+h1 { /* Header 1 - font specifications for level 1 section title  */
+    font-weight:bold;
+    color: #3b082f;
+    text-align: left;
+}
+.h1_nospace { /* Header 1 - font specifications for level 1 section title  */
+    font-weight:bold;
+    color: #3b082f;
+    text-align: left;
+    margin-bottom: 1px;
+}
+h2 { /* Header 2 - font specifications for level 2 section title */
+    font-weight:bold;
+    color: #3b082f;
+    text-align: left;
+}
+
+h3 { /* Header 3 - font specifications of level 3 section title  */
+    font-weight:bold;
+    color: #3b082f;
+    text-align: left;
+    margin-bottom: 1px;
+}
+.h_nospace { /* Header 3 - font specifications of level 3 section title  */
+    font-weight:bold;
+    color: #3b082f;
+    text-align: left;
+    margin-bottom: 1px;
+    margin-top: 2px;
+}
+
+h4 { /* Header 4 - font specifications of level 4 section title  */
+    font-weight:bold;
+    color: #3b082f;
+    text-align: left;
+    margin-bottom: 1px;
+}
+
+
+body {
+  background-color:white;
+}
+
+.highlightme { 
+  background-color:yellow; 
+}
+
+p { 
+  background-color:white; 
+}
+
+h5 {
+  color: #3b082f;
+  margin-bottom: 1px;
+}
+
+
+
+.iframe {
+  text-align: center;
+}
+
+a:link {
+  color: darkmagenta;
+}
+
+.figlabel {
+  text-align: center;
+  color: darkslategray;
+  font-weight: bold;
+  font-size: 18;
+}
+
+table {
+  background-color: white;
+}
+
+.td1 {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+td {
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  font-size: 12px;
+}
+th {
+  font-variant: small-caps;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  font-size: 17px;
+}
+
+tr:hover {background-color: coral;}
+
+.inverse {
+  background-color: #70384A;
+  color:  #f0d7eb;
+}
+
+.inverse_light {
+  background-color: #f0d7eb;
+  color: #3b082f;
+
+
+```
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+
+if (!require("xaringanthemer")) {
+   install.packages("xaringanthemer")              
+   library("xaringanthemer")
+}
+if (!require("knitr")) {
+   install.packages("knitr")
+   library(knitr)
+}
+if (!require("pander")) {
+   install.packages("pander")
+   library(pander)
+}
+if (!require("dplyr")) {
+    install.packages("dplyr")              
+    library("dplyr")
+}
+if (!require("plyr")) {
+    install.packages("plyr")              
+    library("plyr")
+}
+if (!require("stringr")) {
+    install.packages("stringr")              
+    library("stringr")
+}
+if (!require("plotly")) {
+    install.packages("plotly")              
+    library("plotly")
+}
+if (!require("pandoc")) {
+    install.packages("pandoc")              
+    library("pandoc")
+}
+if (!require("gridExtra")) {
+    install.packages("gridExtra")              
+    library("gridExtra")
+}
+if (!require("grid")) {
+    install.packages("grid")              
+    library("grid")
+}
+if (!require("raster")) {
+    install.packages("raster")              
+    library("raster")
+}
+if (!require("dbscan")) {
+    install.packages("dbscan")              
+    library("dbscan")
+}
+if (!require("pROC")) {
+    install.packages("pROC")              
+    library("pROC")
+}
+if (!require("ggridges")) {
+    install.packages("ggridges")              
+    library("ggridges")
+}
+if (!require("knitr")) {
+    install.packages("knitr")              
+    library("knitr")
+}
+if (!require("GGally")) {
+    install.packages("GGally")              
+    library("GGally")
+}
+if (!require("ggplot2")) {
+    install.packages("ggplot2")              
+    library("gglpot2")
+}
+if (!require("cluster")) {
+    install.packages("cluster")              
+    library("cluster")
+}
+if (!require("kableExtra")) {
+    install.packages("kableExtra", dependencies = TRUE)              
+    library("kableExtra")
+}
+if (!require("forcats")) {
+    install.packages("forcats", dependencies = TRUE)              
+    library("forcats")
+}
+if (!require("rpart")) {
+    install.packages("rpart", dependencies = TRUE)              
+    library("rpart")
+}
+if (!require("rpart.plot")) {
+    install.packages("rpart.plot", dependencies = TRUE)              
+    library("rpart.plot")
+}
+if (!require("metan")) {
+    install.packages("metan", dependencies = TRUE)              
+    library("metan")
+}
+ if (!require("factoextra")) {
+   install.packages("factoextra", dependencies = TRUE)
+   library("factoextra")
+ }
+
+
+knitr::opts_chunk$set(
+                  cache = FALSE,
+                  echo = FALSE,
+                  message = FALSE, 
+                  warning = FALSE,
+                  hiline = TRUE
+                  )
+
+
+```
+
+<h1>Introduction</h1>
+
+<h3>Goal:</h3> 
+Create accurate and detailed borrower profiles to better predict borrower outcome ensuring timely & complete repayment of loans & prevent fraudulent borrowing<br>
+
+
+.pull-left[
+<h3>Implementation Purposes:</h3>
+  - Targeted reduced APR loan marketing for prime borrowers
+  - Identification of borrower with high default risk for preemptive mitigation strategies
+      - ex: refinancing or adjusted repayment plans
+  - Live spending limit adjustments to support borrower needs
+  - Improve fraud detection 
+]
+
+.pull-right[
+<h3>Steps:</h3>
+  1. EDA & Dimension Reduction Through Variable Creation
+  2. K-means Cluster Analysis
+  3. Hierarchical Agglomerative Clustering Analysis
+  4. Principal Component Analysis
+  5. Outlier Detection
+]
+<br>
+<h3>Data:</h3> Loan default data was obtained from <a href="https://pengdsci.github.io/datasets/LoanData2/BankLoanDefaultDataset.csv">Applied Analytics through Case Studies Using SAS and R, Deepti Gupta</a>
+---
+class:inverse_light
+<h1 class = "h1_nospace">Variable Types & Details</h1>
+A high level summary of the data analyzed
+<br>
+
+
+<table>
+<thead><tr>
+<th>Variable Name</th>
+<th>Variable Type</th>
+<th>Details</th>
+</tr></thead>
+<tbody>
+<tr><td class = "td1">Loan Status</td><td>Categorical</td><td>Status of bank loan default (Default vs Current)</td></tr>
+<tr><td class = "td1">Checking Amount</td><td>Numeric</td><td>Amount in borrower's checking account</td>
+<tr><td class = "td1">Term</td><td>Numeric</td><td>Loan term in months</td></tr>
+<tr><td class = "td1">Credit Score</td><td>Numeric</td><td>Borrower's credit score</td></tr>
+<tr><td class = "td1">Gender</td><td>Categorical</td><td>Borrower's gender</td></tr>
+<tr><td class = "td1">Marital Status</td><td>Categorical</td><td>Borrower's marital status</td></tr>
+<tr><td class = "td1">Employment Status</td><td>Categorical</td><td>Borrower's employment status</td></tr>
+<tr><td class = "td1">Amount</td><td>Numeric</td><td>Loan amount</td></tr>
+<tr><td class = "td1">Saving Amount</td><td>Numeric</td><td>Ammount in borrower's saving account</td></tr>
+<tr><td class = "td1">Age</td><td>Numeric</td><td>Duration of borrower's employment in months</td></tr>
+<tr><td class = "td1">Number of Credit Accounts</td><td>Numeric</td><td>Number of credit accounts in borrower's name</td></tr>
+<tr><td class = "td1">Car Loan</td><td>Categorical</td><td>If borrower holds a car loan</td></tr>
+<tr><td class = "td1">Personal Loan</td><td>Categorical</td><td>If borrower holds a personal loan</td></tr>
+<tr><td class = "td1">Home Loan</td><td>Categorical</td><td>If borrower holds a home loan</td></tr>
+<tr><td class = "td1">Education Loan</td><td>Categorical</td><td>If borrower holds an education loan</td></tr>
+<tr><td class = "td1">Any Loan</td><td>Categorical</td><td>A feature variable measuring how many of the 4 defined loans held by the borrower (personal, home, education, or car)</td></tr>
+<tr><td class = "td1">Total Debt</td><td>Numeric</td><td>A feature variable measuring the total number of borrower's debts (4 defined loans and Number of Credit Accounts)</td></tr>
+</tbody>
+</table>
+
+
+```{r, echo = FALSE}
+raw.loan <- read.csv("https://nlepera.github.io/sta551/HW04/data/BankLoanDefaultDataset.csv")
+raw.loan$Any_loan <- rowSums(raw.loan[c(7:10)] == 1)
+raw.loan$Total_debt <- as.numeric(raw.loan$Any_loan) + as.numeric(raw.loan$No_of_credit_acc)
+raw.loan$Loan_status <- factor(raw.loan$Default, levels = c(0:1), labels = c("Current","Default"))
+raw.loan$Car_loan <- factor(raw.loan$Car_loan, levels = c(0:1), labels = c("No", "Yes"))
+raw.loan$Personal_loan <- factor(raw.loan$Personal_loan, levels = c(0:1), labels = c("No", "Yes"))
+raw.loan$Home_loan <- factor(raw.loan$Home_loan, levels = c(0:1), labels = c("No", "Yes"))
+raw.loan$Education_loan <- factor(raw.loan$Education_loan, levels = c(0:1), labels = c("No", "Yes"))
+
+loan <- raw.loan[-1] %>% 
+  relocate(Loan_status, .before = Checking_amount) %>%
+  relocate(Amount, .after = Loan_status) %>% 
+  relocate(Term, .after = Amount) %>% 
+  relocate(Total_debt, .after = Term) %>% 
+  relocate(No_of_credit_acc, .before = Car_loan)
+```
+
+---
+<h1>EDA & Feature Variable Generation</h1>
+
+.pull-left[
+Reducing the number of categorical variables by creating a numeric feature variable allows for improved analysis with reduced noise.
+<br><br>
+
+The following variables were combined to create a new variable: <b>Total Debt</b>
+  - Car Loan
+  - Personal Loan
+  - Home Loan
+  - Education Loan
+  - Number of Credit Accounts
+
+<br>
+Total.Debt = Car.loan + Personal.loan + 
+            Home.loan + Education.loan + #.of.Credit.Acts
+]
+.pull-right[
+```{r, echo = FALSE, fig.align='center', fig.height=7}
+
+par(mfrow = c(1,2))
+hist(x = loan$Total_debt, 
+     prob = TRUE,
+     main = "Distribution of 
+Borrower Total Debt",
+     xlab = "Total Number of Debt Accounts")
+
+plot(x = loan$Loan_status,
+     y = loan$Total_debt,
+     col = c("skyblue", "darkred"),
+     main = "Total Debt by Loan Status
+(Current vs Default)",
+     xlab = "Borrower Loan Default Status
+(Current vs Default)",
+     ylab = "Total Number of Borrower Debt Accounts")
+```
+]
+
+---
+<h1 class = "h1_nospace">k-Means Cluster Analysis (Full Data)</h1>
+Supervised algorithm creating population segments based a the pre-defined number of clusters (2).<br>
+<b>Good for:</b> fitting into pre-determined groups (ex: risk ranking)<br>
+<b>Bad for:</b> Adjusting to real world data as received<br>
+
+.pull-left[
+```{r, echo = FALSE, fig.height=6}
+loan.cluster <- loan[, c(1:6, 15:17)]
+loan.cluster$Loan_status <- as.numeric(loan.cluster$Loan_status)
+loan.cluster.group <- kmeans(x = loan.cluster, centers = 2)
+loan.clustID <- loan.cluster.group$cluster
+
+clusplot(loan.cluster,
+         loan.clustID,
+         lines = 0,
+         shade = T,
+         color = T,
+         labels = 1,
+         plotchar = F,
+         span = T,
+         main = "Borrower Population Clusters")
+```
+]
+
+.pull-right[
+```{r, warning = FALSE, echo = FALSE, fig.height=4, fig.align='center'}
+plot2 <- fviz_nbclust(loan.cluster, FUN = hcut, method = "silhouette")
+plot2
+```
+<h4 class = "h_nospace">Results</h4>
+A best fit of 2 clusters with significant overlap indicates a poor cluster model fit. The component variables created by k-Means clustering shown to be an insufficient model, accounting for only 43.2% of variability in the data.<br><br>
+
+]
+
+---
+<h1 class = "h_nospace">Hierarchical Data Clustering - Agglomerative</h1>
+Unsupervised algorithm creating population segments based on dataset alone. Number of clusters chosen <i>after</i> grouping.<br>
+<b>Good for:</b> Grouping population based on current real world evidence<br>
+<b>Bad for:</b> Handling datasets with extreme outliers or a significant number of outliers<br><br>
+
+```{r, echo = FALSE}
+heirarch.loans <- loan[, c("Checking_amount", "Amount", "Emp_duration", "Loan_status")]
+heirarch.distance <- dist(heirarch.loans, method = "euclidean")
+hcluster1 <- hclust(heirarch.distance, method = "complete")
+```
+
+.pull-left[
+<br>The following variables were analyzed to determine the borrower's repayment profile:
+
+  - Amount in borrower's saving account 
+  - Borrower's credit score 
+  - Loan amount 
+  - Status of bank loan default (Default vs Current) 
+  
+This unsupervised 'bottom-up' approach allows for adaptive grouping of the population based on the current real world evidence.
+
+
+<b>Main difference:</b> Clusters created <i>before</i> optimal number determined <br>
+<b>Optimal cluster count:</b> 3
+]
+.pull-right[
+<h4>Determining Cluster Count</h4>
+
+```{r, echo=FALSE, fig.height = 5}
+fviz_nbclust(heirarch.loans, FUN = hcut, method = "silhouette")
+```
+]
+
+---
+<h1>Cluster Visualization - Dendrogram (Hierarchical Clustered Data)</h1>
+.pull-left[
+```{r, fig.height=7}
+
+hcluster2 <- hcluster1
+hCluster_group <- cutree(hcluster2, k = 3)
+heirarch.loans$hCluster_group = hCluster_group
+
+plot(hcluster2, cex = 0.6, labels = FALSE, hang = -1, xlab = "", main = "Dendogram of Borrower Profile Clustering")
+par(lwd = 3)
+rect.hclust(hcluster1, k = 3, border = 2:9)
+
+```
+]
+
+
+.pull-right[
+<br><br>
+<h4 class = "h_nospace">Interpreting the Dendrogram</h4>
+
+  - Each split in the dendogram (tree) captures a split into 2 clusters
+  
+  - Color square overlays represent each cluster selected
+  
+  - To adjust number of cluster selected, different height used for cluster selection
+    - higher = fewer clusters
+    - lower = more clusters
+]
+
+---
+<h1>Final Cluster Analysis (Heirarchal Clustered Data)</h1>
+.pull-left[
+```{r}
+par(lwd=1)
+clusplot(heirarch.loans,
+         hCluster_group,
+         lines = 0,
+         shade = T,
+         color = T,
+         labels = 1,
+         plotchar = F,
+         span = T,
+         main = "Cluster Plot of Raw Borrower Data")
+
+```
+]
+
+.pull-right[
+<br><h4>Results</h4>
+A best fit of 3 clusters with reduced overlap indicates an improved cluster model fit. 
+
+The component variables created by heirarchal clustering are shown to be a moderate fit model, accounting for 61.95% of variability in the data.<br><br>
+
+While computationally heavy, this model will provide moderate success in predictive classificaiton of borrowers.
+]
+
+---
+<h1>Principal Component Analysis (PCA) & Reducing dimensions</h1>
+
+```{r}
+pca.loans.scale <- heirarch.loans[,-5]
+
+pca.loans.scale$Checking_amount <- scale(pca.loans.scale$Checking_amount)
+pca.loans.scale$Amount <- scale(pca.loans.scale$Amount)
+pca.loans.scale$Emp_duration <- scale(pca.loans.scale$Emp_duration)
+pca.loans.scale$Loan_status <- scale(as.numeric(pca.loans.scale$Loan_status))
+
+
+pca.loans <- prcomp(pca.loans.scale, center = TRUE, scale = TRUE)
+```
+
+All data transformed via scale function as log scaling not possible with employment duration as some duration = 0 months. 
+
+Variables selected for principal component creation: Checking amount, Amount, Employment duration, Loan status
+
+.pull-left[
+```{r}
+kable(round(pca.loans$rotation, 2), caption = "Factor loading of Borrower Profile PCA") %>% 
+  kable_styling()
+```
+]
+.pull-right[
+```{r}
+kable(round(summary(pca.loans)$importance, 3), caption = "Importance of each componant of Borrower Profile PCA") %>% 
+  kable_styling()
+```
+]
+
+<br>As demonstrated by the above PCA tables, the first three principal components account for 64.1% of the variation in the borrower profile data.  The equation for each principal component is included below: 
+
+<br>PC(1) = -0.65[Checking.amount] + 0.30[Loan.amount] - 0.21[Employment.duration] + 0.67[Loan.status]
+<br>PC(2) = -0.01[Checking.amount] + 0.61[Loan.amount] + 0.79[Employment.duration] - 0.03[Loan.status]
+
+---
+<h1>Principal Component Analysis (PCA) & Reducing dimensions</h1>
+$PC_1$ = Repayment Security Index
+$PC_2$ = Repayment Security Index
+
+.pull-left[
+<h4>Determine Best Number of Clusters</h4>
+The same process was utilized to determine the best fit number of clusters for the PCA variables, again outlining 3 clusters as the best fit.  
+
+Despite this, 4 clusters were utilized to reduce overall cluster overlap. 
+
+<h4>Cluster Naming & Classification</h4>
+borrower segmentation into four clusters:
+  - High immediate financial status & High Repayment Security
+  - High Immediate Financial Status & Low Repayment Security
+  - Low Immediate Financial Status & High Repayment Security
+  - Low Immediate Financial Status & Low Repayment Security
+]
+
+.pull-right[
+
+```{r, fig.height=6}
+pca.cluster <- data.frame(Imed_fin_stat_PC1 = pca.loans$x[,1],
+                          Repay_sec_PC2 = pca.loans$x[,2])
+
+pca.distance <- dist(pca.cluster, method = "euclidean")
+pca.clust <- hclust(pca.distance, method = "complete")
+pca.cluster.group <- cutree(pca.clust, 4)
+
+heirarch.loans$pcaCluster = as.character(pca.cluster.group)
+
+clusplot(pca.cluster,
+         pca.cluster.group,
+         lines = 0,
+         shade = T,
+         color = T,
+         labels = 1,
+         xlab = "Immediate Financial Status Index",
+         ylab = "Repayment Security Index",
+         plotchar = F,
+         span = T,
+         main="Cluster Plot of PCA Components")
+
+```
+]
+
+---
+<h1>Local Outlier Factor (LOF) Implementation</h1>
+
+.pull-left[
+<h4>Local Outlier Factor (LOF) Score</h4>
+
+A local outlier factor (LOF) score is calculated utilizing the below equation to compare a data point's local reachability density (LRD) of the nearest k neighbors to point $A_i$ 
+for $i = 1 , 2, ... , n$.
+
+<img src="https://nlepera.github.io/sta551/Screenshot%202024-12-12%20234238.png" style="width:300px">
+
+]
+
+.pull-right[
+
+<h4>Summary statistics</h4> 
+
+LOF scores for Immediate Financial Status Index & Repayment Security Index
+
+```{r}
+
+lof.pca.cluster <- lof(pca.cluster, minPts = 50)
+pca.cluster$LOF <- lof.pca.cluster
+
+summary(lof.pca.cluster)
+```
+]
+
+The LOF factor acts as an easily filterable scale variable to quickly identify outlier values.  
+  - LOF > 1 indicates a potential outlier
+    - greater values for LOF indicating more extreme outliers
+  - LOF $\le$ 1 indicates not an outlier 
+
+
+<b>LOF Cutoff Selected:</b> 1.8
+
+---
+<h1>Outlier Visualization and Listing</h1>
+
+.pull-left[
+<h3>Outliers Circled and Numbered Below </h3>
+```{r}
+plot(x = pca.cluster$Imed_fin_stat_PC1,
+     y = pca.cluster$Repay_sec_PC2,
+     pch = "x",
+     cex = 0.5,
+     xlab = "Immediate Financial Status Index",
+     ylab = "Repayment Security Index",
+     main="Outlier Identification Amongst PCA Components")
+points(pca.cluster,
+       cex = ((lof.pca.cluster - 1)*1.5),
+       pch = 21,
+       col = "hotpink")
+text(pca.cluster[lof.pca.cluster > 1.8,],
+     labels = round(lof.pca.cluster, 1)[lof.pca.cluster >1.8],
+     pos = 2,
+     cex = 0.6,
+     col = "darkred")
+```
+]
+.pull-right[
+<h3>All LOF scores > 1.8 - Data Outliers </h3>
+```{r}
+kable(filter(pca.cluster, LOF > 1.8)) %>% 
+  kable_styling()
+```
+
+Selecting an LOF value of 1.7 resulted in > 1% outlier flagging. This 1% outlier flagging cap will scale with operational constraints until the need for hyperparameter (k) tuning is required. 
+]
+
+---
+<h1>Limitations</h1>
+
+Utilizing clustering to predict borrower repayment profile comes with some limitations to consider
+  - Hierarchical clustering can require significant computational power
+    - Unsupervised models more costly to run
+  - k-Means clustering requires manual updating for fine tuning to real world data
+  - LOF outlier detection requirers hyperparameter tuning for increased accuracy over time
+
+---
+<h1>Conclusions</h1>
+
+Overall proper borrower profile segmentation will allow for:
+  - Improved loan default prediction models
+  - Improved identification of fraudulent pre-approval applications
+  - Improved targeted marketing to drive up borrowing rates from borrowers with a high repayment profile.  
+  
+
+Overall this borrower segmentation and classification may also be used for predictive analysis regarding borrower pre-approval determinations.  Overall borrower population segmentation remains a highly effective tool for managing and predicting overall loan outcomes.
+
+---
+<h1>References</h1>
+
+<h3>Data source:</h3>
+
+Applied Analytics through Case Studies Using SAS and R, Deepti Gupta by APress, ISBN - 978-1-4842-3525-6
+Accessed via: <a href="https://pengdsci.github.io/datasets/LoanData2/BankLoanDefaultDataset.csv">https://pengdsci.github.io/datasets/LoanData2/BankLoanDefaultDataset.csv</a>
